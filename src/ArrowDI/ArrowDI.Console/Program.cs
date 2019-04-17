@@ -32,29 +32,20 @@ namespace ArrowDI.Console
     {
         static void Main(string[] args)
         {
+            // create instance
             var quiver = new Quiver();
-
+            
+            // register objects
             quiver.Push<IHoge, Hoge>();
             quiver.Push<IFuga, Fuga>(50);
-
+            
+            // relate objects
+            //   [syntax] <from, to>
             quiver.Bind<IFuga, IHoge>();
-
+            
+            // take the instance
             var v = quiver.Pull<IHoge>();
             System.Console.WriteLine(v.Fuga.Value);
-
-
-            var ls = new List<object>();
-            ls.Add(10);
-            ls.Add(1.5);
-            ls.Add("test");
-            foreach (var item in ls)
-            {
-                System.Console.WriteLine(item.GetType());
-            }
-
-
-
-
 
             System.Console.WriteLine("--- end ---");
             System.Console.ReadKey();
