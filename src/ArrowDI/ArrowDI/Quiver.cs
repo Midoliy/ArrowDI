@@ -7,8 +7,10 @@ namespace ArrowDI
 {
     public class Quiver
     {
+        private static Quiver Shared { get; }
         private readonly Dictionary<Type, object> _storage;
 
+        static Quiver() => Shared = new Quiver();
         public Quiver() => _storage = new Dictionary<Type, object>();
 
         /// <summary>
