@@ -20,8 +20,11 @@ namespace ArrowDI
         public void Push<TInterface, TImplements>(params object[] parameters)
             where TImplements : TInterface
         {
-            var instance = Activator.CreateInstance(typeof(TImplements), parameters);
             var key = typeof(TInterface);
+            if (!key.IsInterface)
+                throw new InvalidCastException($"{key} is not interface.");
+
+            var instance = Activator.CreateInstance(typeof(TImplements), parameters);
 
             if (_storage.TryGetValue(key, out object _))
                 _storage[key] = instance;
@@ -51,6 +54,12 @@ namespace ArrowDI
         {
             var fromIF = typeof(TFromInterface);
             var toIF = typeof(TToInterface);
+
+            if (!fromIF.IsInterface)
+                throw new InvalidCastException($"{fromIF} is not interface.");
+
+            if (!toIF.IsInterface)
+                throw new InvalidCastException($"{toIF} is not interface.");
 
             var property = toIF
                             .GetProperties()
