@@ -18,7 +18,11 @@ namespace ArrowDI.Console
 
     public class Hoge : IHoge
     {
+        [Arrow(Aura = "Fuga2")]
         public IFuga Fuga { get; set; }
+
+        [Arrow(Aura = "Fuga")]
+        public IFuga Fuga2 { get; set; }
     }
 
     public class Fuga : IFuga
@@ -41,10 +45,10 @@ namespace ArrowDI.Console
             
             // relate objects
             //   [syntax] <from, to>
-            quiver.Bind<IFuga, IHoge>();
+            quiver.Bind<IFuga, IHoge>("Fuga");
             
             // take the instance
-            var v = quiver.Pull<IHoge>();
+            var v = quiver.Pull<IHoge>() as Hoge;
             System.Console.WriteLine(v.Fuga.Value);
 
             System.Console.WriteLine("--- end ---");

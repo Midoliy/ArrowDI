@@ -10,7 +10,6 @@ namespace ArrowDI
 
         public SelectableQuiver() => _storage = new Dictionary<Type, List<QuiverContainer>>();
 
-
         private class QuiverContainer
         {
             public string Name { get; }

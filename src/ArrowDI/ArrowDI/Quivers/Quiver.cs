@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -52,7 +51,7 @@ namespace ArrowDI
         /// <typeparam name="TFromInterface"></typeparam>
         /// <typeparam name="TToInterface"></typeparam>
         /// <returns></returns>
-        public bool Bind<TFromInterface, TToInterface>()
+        public bool Bind<TFromInterface, TToInterface>(string aura = "")
         {
             var fromIF = typeof(TFromInterface);
             var toIF = typeof(TToInterface);
@@ -63,24 +62,42 @@ namespace ArrowDI
             if (!toIF.IsInterface)
                 throw new InvalidCastException($"{toIF} is not interface.");
 
-            var property = toIF
-                            .GetProperties()
-                            .Where(t => t.PropertyType == fromIF)
-                            .FirstOrDefault();
+            var p = toIF.GetProperties()
+                        .Where(t => t.PropertyType == fromIF)
+                        .FirstOrDefault();
 
-            if (property == default)
-                return false;
-
-            if (!property.CanWrite)
-                return false;
-
-            if (!_storage.TryGetValue(fromIF, out object from))
+            if (p == default)
                 return false;
 
             if (!_storage.TryGetValue(toIF, out object to))
                 return false;
 
-            property.SetValue(to, from);
+            if (!_storage.TryGetValue(fromIF, out object from))
+                return false;
+
+            var properties = to.GetType()
+                               .GetProperties()
+                               .Where(t => t.PropertyType == fromIF)
+                               .ToArray();
+            
+            foreach (var property in properties)
+            {
+                var attr = (ArrowAttribute)Attribute.GetCustomAttribute(property, typeof(ArrowAttribute));
+                if (attr == null)
+                    continue;
+
+                if (attr.Aura != aura)
+                    continue;
+
+                property.SetValue(to, from);
+                return true;
+            }
+
+            var prop = properties.First();
+            if (!prop.CanWrite)
+                return false;
+
+            prop.SetValue(to, from);
 
             return true;
         }
