@@ -6,7 +6,7 @@ namespace ArrowDI
 {
     public class Quiver
     {
-        private static Quiver Shared { get; }
+        public static Quiver Shared { get; }
         private readonly Dictionary<Type, object> _storage;
 
         static Quiver() => Shared = new Quiver();
@@ -32,7 +32,7 @@ namespace ArrowDI
             else
                 _storage.Add(key, instance);
         }
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -62,9 +62,10 @@ namespace ArrowDI
             if (!toIF.IsInterface)
                 throw new InvalidCastException($"{toIF} is not interface.");
 
-            var p = toIF.GetProperties()
-                        .Where(t => t.PropertyType == fromIF)
-                        .FirstOrDefault();
+            var p = toIF
+                      .GetProperties()
+                      .Where(t => t.PropertyType == fromIF)
+                      .FirstOrDefault();
 
             if (p == default)
                 return false;
@@ -75,25 +76,34 @@ namespace ArrowDI
             if (!_storage.TryGetValue(fromIF, out object from))
                 return false;
 
-            var properties = to.GetType()
-                               .GetProperties()
-                               .Where(t => t.PropertyType == fromIF)
-                               .ToArray();
-            
-            foreach (var property in properties)
-            {
-                var attr = (ArrowAttribute)Attribute.GetCustomAttribute(property, typeof(ArrowAttribute));
-                if (attr == null)
-                    continue;
+            var properties = to
+                              .GetType()
+                              .GetProperties()
+                              .Where(t => t.PropertyType == fromIF)
+                              .ToArray();
 
-                if (attr.Aura != aura)
-                    continue;
+            // [auraの指定があった場合にのみ実行]
+            //      全プロパティの属性をチェックし, 指定されたauraと一致するプロパティにバインドする.
+            if (!string.IsNullOrEmpty(aura))
+                foreach (var property in properties)
+                {
+                    var arrow = (ArrowAttribute)Attribute.GetCustomAttribute(property, typeof(ArrowAttribute));
+                    if (arrow == null)
+                        continue;
 
-                property.SetValue(to, from);
-                return true;
-            }
+                    if (arrow.Aura != aura)
+                        continue;
 
-            var prop = properties.First();
+                    property.SetValue(to, from);
+                    return true;
+                }
+
+            // [auraの指定がなかった場合 or 指定したauraが見つからなかった場合に実行]
+            //      一番最初に見つけたプロパティにバインドする.
+            var prop = properties.FirstOrDefault();
+            if (prop == default)
+                return false;
+
             if (!prop.CanWrite)
                 return false;
 

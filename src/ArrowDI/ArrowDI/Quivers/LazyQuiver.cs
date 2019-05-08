@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.IO;
 
 namespace ArrowDI
 {
@@ -63,7 +65,7 @@ namespace ArrowDI
         /// <typeparam name="TFromInterface"></typeparam>
         /// <typeparam name="TToInterface"></typeparam>
         /// <returns></returns>
-        public bool Bind<TFromInterface, TToInterface>()
+        public bool Bind<TFromInterface, TToInterface>(string aura = "")
         {
             var fromIF = typeof(TFromInterface);
             var toIF = typeof(TToInterface);
@@ -74,15 +76,12 @@ namespace ArrowDI
             if (!toIF.IsInterface)
                 throw new InvalidCastException($"{toIF} is not interface.");
 
-            var property = toIF
-                            .GetProperties()
-                            .Where(t => t.PropertyType == fromIF)
-                            .FirstOrDefault();
+            var hasTargetProperty = toIF
+                                      .GetProperties()
+                                      .Where(t => t.PropertyType == fromIF)
+                                      .Any();
 
-            if (property == default)
-                return false;
-
-            if (!property.CanWrite)
+            if (!hasTargetProperty)
                 return false;
 
             if (!_storage.TryGetValue(fromIF, out Lazy<object> from))
@@ -94,9 +93,44 @@ namespace ArrowDI
             if (!_options.TryGetValue(toIF, out List<Action> _))
                 _options.Add(toIF, new List<Action>());
 
-            _options[toIF].Add(() => property.SetValue(to.Value, from.Value));
+            _options[toIF].Add(() =>
+            {
+                var properties = to.Value
+                                      .GetType()
+                                      .GetProperties()
+                                      .Where(t => t.PropertyType == fromIF);
+
+                var property = string.IsNullOrEmpty(aura)
+                                   ? properties.First()
+                                   : SelectPropetyOrDefault(properties, aura);
+
+                if (property == default)
+                    throw new NotFoundException($"No property found with ArrowAttribute(Aura= {aura}).");
+
+                if (!property.CanWrite)
+                    throw new FieldAccessException($"{property.Name} cannot be writeable.");
+
+                property.SetValue(to.Value, from.Value);
+            });
 
             return true;
+
+            static PropertyInfo SelectPropetyOrDefault(IEnumerable<PropertyInfo> properties_, string aura_)
+            {
+                foreach (var property_ in properties_)
+                {
+                    var arrow = (ArrowAttribute)Attribute.GetCustomAttribute(property_, typeof(ArrowAttribute));
+                    if (arrow == null)
+                        continue;
+
+                    if (arrow.Aura != aura_)
+                        continue;
+
+                    return property_;
+                }
+
+                return default;
+            }
         }
     }
 }
