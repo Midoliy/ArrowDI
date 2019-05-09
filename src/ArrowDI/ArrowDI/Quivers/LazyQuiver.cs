@@ -65,7 +65,7 @@ namespace ArrowDI
         /// <typeparam name="TFromInterface"></typeparam>
         /// <typeparam name="TToInterface"></typeparam>
         /// <returns></returns>
-        public bool Bind<TFromInterface, TToInterface>(string aura = "")
+        public bool Bind<TFromInterface, TToInterface>(string name = "")
         {
             var fromIF = typeof(TFromInterface);
             var toIF = typeof(TToInterface);
@@ -100,12 +100,12 @@ namespace ArrowDI
                                       .GetProperties()
                                       .Where(t => t.PropertyType == fromIF);
 
-                var property = string.IsNullOrEmpty(aura)
+                var property = string.IsNullOrEmpty(name)
                                    ? properties.First()
-                                   : SelectPropetyOrDefault(properties, aura);
+                                   : SelectPropetyOrDefault(properties, name);
 
                 if (property == default)
-                    throw new NotFoundException($"No property found with ArrowAttribute(Aura= {aura}).");
+                    throw new NotFoundException($"No property found with ArrowAttribute(Aura= {name}).");
 
                 if (!property.CanWrite)
                     throw new FieldAccessException($"{property.Name} cannot be writeable.");
@@ -115,15 +115,15 @@ namespace ArrowDI
 
             return true;
 
-            static PropertyInfo SelectPropetyOrDefault(IEnumerable<PropertyInfo> properties_, string aura_)
+            static PropertyInfo SelectPropetyOrDefault(IEnumerable<PropertyInfo> properties_, string name_)
             {
                 foreach (var property_ in properties_)
                 {
-                    var arrow = (ArrowAttribute)Attribute.GetCustomAttribute(property_, typeof(ArrowAttribute));
-                    if (arrow == null)
+                    var arrowhead = (ArrowheadAttribute)Attribute.GetCustomAttribute(property_, typeof(ArrowheadAttribute));
+                    if (arrowhead == null)
                         continue;
 
-                    if (arrow.Aura != aura_)
+                    if (arrowhead.Name != name_)
                         continue;
 
                     return property_;

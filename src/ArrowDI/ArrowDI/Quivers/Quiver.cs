@@ -51,7 +51,7 @@ namespace ArrowDI
         /// <typeparam name="TFromInterface"></typeparam>
         /// <typeparam name="TToInterface"></typeparam>
         /// <returns></returns>
-        public bool Bind<TFromInterface, TToInterface>(string aura = "")
+        public bool Bind<TFromInterface, TToInterface>(string name = "")
         {
             var fromIF = typeof(TFromInterface);
             var toIF = typeof(TToInterface);
@@ -84,14 +84,14 @@ namespace ArrowDI
 
             // [auraの指定があった場合にのみ実行]
             //      全プロパティの属性をチェックし, 指定されたauraと一致するプロパティにバインドする.
-            if (!string.IsNullOrEmpty(aura))
+            if (!string.IsNullOrEmpty(name))
                 foreach (var property in properties)
                 {
-                    var arrow = (ArrowAttribute)Attribute.GetCustomAttribute(property, typeof(ArrowAttribute));
-                    if (arrow == null)
+                    var arrowhead = (ArrowheadAttribute)Attribute.GetCustomAttribute(property, typeof(ArrowheadAttribute));
+                    if (arrowhead == null)
                         continue;
 
-                    if (arrow.Aura != aura)
+                    if (arrowhead.Name != name)
                         continue;
 
                     property.SetValue(to, from);
