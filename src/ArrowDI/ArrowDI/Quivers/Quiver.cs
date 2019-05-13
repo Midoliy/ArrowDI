@@ -40,7 +40,12 @@ namespace ArrowDI
         /// <returns></returns>
         public TInterface Pull<TInterface>()
         {
-            return _storage.TryGetValue(typeof(TInterface), out object value)
+            var key = typeof(TInterface);
+
+            if (!key.IsInterface)
+                throw new InvalidCastException($"{key} is not interface.");
+
+            return _storage.TryGetValue(key, out object value)
                 ? (TInterface)value
                 : default;
         }

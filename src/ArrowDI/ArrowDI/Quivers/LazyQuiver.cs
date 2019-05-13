@@ -47,6 +47,9 @@ namespace ArrowDI
         {
             var key = typeof(TInterface);
 
+            if (!key.IsInterface)
+                throw new InvalidCastException($"{key} is not interface.");
+
             if (!_storage.TryGetValue(key, out Lazy<object> value))
                 return default;
 
