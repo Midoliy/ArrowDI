@@ -50,8 +50,8 @@ namespace ArrowDI
             var instance = new Lazy<object>(() => Activator.CreateInstance(typeof(TImplements), parameters));
 
             if (containers.TryGetValue(aura, out Container _))
-                // コンテナリストの中に同一の名前で登録されているコンテナがある場合, 上書きする.
-                containers[aura] = new Container(instance);
+                // コンテナリストの中に同一の名前で登録されているコンテナがある場合, 例外をスローする.
+                throw new ConflictRegistrationException($"[{aura}] is already registerd.");
             else
                 // コンテナを新規登録する.
                 _storage[key].Add(aura, new Container(instance));
