@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ArrowDI.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ namespace ArrowDI
 
         private readonly Dictionary<Type, Dictionary<string, Container>> _storage;
 
+        static SelectableQuiver() => Shared = new SelectableQuiver();
         public SelectableQuiver() => _storage = new Dictionary<Type, Dictionary<string, Container>>();
 
         /// <summary>
@@ -32,8 +34,10 @@ namespace ArrowDI
                 throw new InvalidCastException($"{key} is not interface.");
 
             // 対象のコンテナが存在しない場合, コンテナを追加する.
-            if (!_storage.TryGetValue(key, out Dictionary<string, Container> containers))
+            if (!_storage.TryGetValue(key, out Dictionary<string, Container> _))
                 _storage.Add(key, new Dictionary<string, Container>());
+
+            var containers = _storage[key];
 
             // auraが空文字の場合, Arrow属性を検索し, Nameプロパティ取得/設定する.
             if (aura == string.Empty)
@@ -60,7 +64,7 @@ namespace ArrowDI
         /// </summary>
         /// <typeparam name="TInterface"></typeparam>
         /// <returns></returns>
-        public TInterface Pull<TInterface>(string aura = "")
+        public TInterface Select<TInterface>(string aura = "")
         {
             if (aura == null)
                 throw new ArgumentNullException(nameof(aura));
@@ -81,6 +85,15 @@ namespace ArrowDI
             return (TInterface)container.Instance.Value;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="TFromInterface"></typeparam>
+        /// <typeparam name="TToInterface"></typeparam>
+        /// <param name="fromAura"></param>
+        /// <param name="toAura"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public bool Bind<TFromInterface, TToInterface>(string fromAura, string toAura, string name = "")
         {
             if (fromAura == null)
@@ -106,16 +119,34 @@ namespace ArrowDI
             if (!_storage.TryGetValue(toKey, out Dictionary<string, Container> toContainer))
                 throw new NotFoundException($"{toKey}");
 
-            if (fromContainer.TryGetValue(fromAura, out Container from))
+            if (!fromContainer.TryGetValue(fromAura, out Container from))
                 throw new NotFoundException($"{fromAura}");
 
-            if (toContainer.TryGetValue(toAura, out Container to))
+            if (!toContainer.TryGetValue(toAura, out Container to))
                 throw new NotFoundException($"{toAura}");
 
             to.Options.Add(() =>
             {
+                var properties = to.Instance
+                                       .Value
+                                       .GetType()
+                                       .GetProperties()
+                                       .Where(t => t.PropertyType == fromKey);
 
+                var property = string.IsNullOrEmpty(name)
+                                   ? properties.First()
+                                   : properties.SelectPropetyOrDefault(name);
+
+                if (property == default)
+                    throw new NotFoundException($"No property found with ArrowheadAttribute(Name= {name}).");
+
+                if (!property.CanWrite)
+                    throw new FieldAccessException($"{property.Name} cannot be writeable.");
+
+                property.SetValue(to.Instance.Value, from.Instance.Value);
             });
+
+            return true;
         }
 
         private class Container

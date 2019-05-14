@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.IO;
+using ArrowDI.Extensions;
 
 namespace ArrowDI
 {
@@ -105,10 +106,10 @@ namespace ArrowDI
 
                 var property = string.IsNullOrEmpty(name)
                                    ? properties.First()
-                                   : SelectPropetyOrDefault(properties, name);
+                                   : properties.SelectPropetyOrDefault(name);
 
                 if (property == default)
-                    throw new NotFoundException($"No property found with ArrowAttribute(Aura= {name}).");
+                    throw new NotFoundException($"No property found with ArrowheadAttribute(Name= {name}).");
 
                 if (!property.CanWrite)
                     throw new FieldAccessException($"{property.Name} cannot be writeable.");
@@ -117,23 +118,6 @@ namespace ArrowDI
             });
 
             return true;
-
-            static PropertyInfo SelectPropetyOrDefault(IEnumerable<PropertyInfo> properties_, string name_)
-            {
-                foreach (var property_ in properties_)
-                {
-                    var arrowhead = (ArrowheadAttribute)Attribute.GetCustomAttribute(property_, typeof(ArrowheadAttribute));
-                    if (arrowhead == null)
-                        continue;
-
-                    if (arrowhead.Name != name_)
-                        continue;
-
-                    return property_;
-                }
-
-                return default;
-            }
         }
     }
 }
