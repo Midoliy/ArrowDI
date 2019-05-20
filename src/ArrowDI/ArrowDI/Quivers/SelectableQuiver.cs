@@ -94,7 +94,7 @@ namespace ArrowDI
         /// <param name="toAura"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public bool Bind<TFromInterface, TToInterface>(string fromAura, string toAura, string name = "")
+        public void Bind<TFromInterface, TToInterface>(string fromAura, string toAura, string name = "")
         {
             if (fromAura == null)
                 throw new ArgumentNullException(nameof(fromAura));
@@ -145,8 +145,6 @@ namespace ArrowDI
 
                 property.SetValue(to.Instance.Value, from.Instance.Value);
             });
-
-            return true;
         }
 
         private class Container

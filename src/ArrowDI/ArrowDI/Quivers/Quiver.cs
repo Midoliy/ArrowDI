@@ -56,7 +56,7 @@ namespace ArrowDI
         /// <typeparam name="TFromInterface"></typeparam>
         /// <typeparam name="TToInterface"></typeparam>
         /// <returns></returns>
-        public bool Bind<TFromInterface, TToInterface>(string name = "")
+        public void Bind<TFromInterface, TToInterface>(string name = "")
         {
             var fromIF = typeof(TFromInterface);
             var toIF = typeof(TToInterface);
@@ -73,13 +73,13 @@ namespace ArrowDI
                       .FirstOrDefault();
 
             if (p == default)
-                return false;
-
-            if (!_storage.TryGetValue(toIF, out object to))
-                return false;
+                throw new UndefinedPropertyException($"{fromIF}");
 
             if (!_storage.TryGetValue(fromIF, out object from))
-                return false;
+                throw new NotFoundException($"{fromIF}");
+
+            if (!_storage.TryGetValue(toIF, out object to))
+                throw new NotFoundException($"{toIF}");
 
             var properties = to
                               .GetType()
@@ -100,21 +100,19 @@ namespace ArrowDI
                         continue;
 
                     property.SetValue(to, from);
-                    return true;
+                    return;
                 }
 
             // [auraの指定がなかった場合 or 指定したauraが見つからなかった場合に実行]
             //      一番最初に見つけたプロパティにバインドする.
             var prop = properties.FirstOrDefault();
             if (prop == default)
-                return false;
+                throw new UndefinedPropertyException();
 
             if (!prop.CanWrite)
-                return false;
+                throw new UndefinedPropertyException();
 
             prop.SetValue(to, from);
-
-            return true;
         }
     }
 }

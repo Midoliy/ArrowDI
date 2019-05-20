@@ -69,7 +69,7 @@ namespace ArrowDI
         /// <typeparam name="TFromInterface"></typeparam>
         /// <typeparam name="TToInterface"></typeparam>
         /// <returns></returns>
-        public bool Bind<TFromInterface, TToInterface>(string name = "")
+        public void Bind<TFromInterface, TToInterface>(string name = "")
         {
             var fromIF = typeof(TFromInterface);
             var toIF = typeof(TToInterface);
@@ -86,13 +86,13 @@ namespace ArrowDI
                                       .Any();
 
             if (!hasTargetProperty)
-                return false;
+                throw new UndefinedPropertyException($"{fromIF}");
 
             if (!_storage.TryGetValue(fromIF, out Lazy<object> from))
-                return false;
+                throw new NotFoundException($"{fromIF}");
 
             if (!_storage.TryGetValue(toIF, out Lazy<object> to))
-                return false;
+                throw new NotFoundException($"{toIF}");
 
             if (!_options.TryGetValue(toIF, out List<Action> _))
                 _options.Add(toIF, new List<Action>());
@@ -116,8 +116,6 @@ namespace ArrowDI
 
                 property.SetValue(to.Value, from.Value);
             });
-
-            return true;
         }
     }
 }
