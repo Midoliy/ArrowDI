@@ -33,8 +33,10 @@ namespace ArrowDI
                 throw new InvalidCastException($"{typeof(TInterface)} is not interface.");
 
             // 対象のコンテナが存在しない場合, コンテナを追加する.
-            if (!_storage.TryGetValue(typeof(TInterface), out Dictionary<string, Container> containers))
+            if (!_storage.TryGetValue(typeof(TInterface), out Dictionary<string, Container> _))
                 _storage.Add(typeof(TInterface), new Dictionary<string, Container>());
+
+            var containers = _storage[typeof(TInterface)];
 
             // auraが空文字の場合, Arrow属性を検索し, Nameプロパティ取得/設定する.
             if (arrowName == string.Empty

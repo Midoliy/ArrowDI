@@ -81,10 +81,9 @@ namespace ArrowDI
             var properties = to
                               .GetType()
                               .GetProperties()
-                              .Where(t => t.PropertyType == fromIF)
-                              .ToArray();
+                              .Where(t => t.PropertyType == fromIF);
 
-            // [auraの指定があった場合にのみ実行]
+            // [Arrowheadの指定があった場合にのみ実行]
             //      全プロパティの属性をチェックし, 指定されたauraと一致するプロパティにバインドする.
             if (!string.IsNullOrEmpty(name))
                 foreach (var property in properties)
@@ -100,10 +99,7 @@ namespace ArrowDI
             // [auraの指定がなかった場合 or 指定したauraが見つからなかった場合に実行]
             //      一番最初に見つけたプロパティにバインドする.
             var prop = properties.FirstOrDefault();
-            if (prop == default)
-                throw new UndefinedPropertyException();
-
-            if (!prop.CanWrite)
+            if (!(prop?.CanWrite ?? false))
                 throw new UndefinedPropertyException();
 
             prop.SetValue(to, from);

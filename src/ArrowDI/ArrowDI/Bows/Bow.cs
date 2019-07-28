@@ -9,7 +9,7 @@ namespace ArrowDI
     {
         private readonly Dictionary<Type, Dictionary<string, Func<object>>> _storage;
 
-        public void Prepare<TInterface, TImplements>(string aura = "")
+        public void Prepare<TInterface, TImplements>(string name = "")
             where TImplements : TInterface
         {
             if (!typeof(TInterface).IsInterface)
@@ -18,15 +18,18 @@ namespace ArrowDI
             if (!typeof(TImplements).GetConstructors().Where(ctor => ctor.GetParameters().Length == 0).Any())
                 throw new NotSupportedException($"{typeof(TImplements)} has no default constructors.");
 
-            if (!_storage.TryGetValue(typeof(TInterface), out Dictionary<string, Func<object>> dict))
+            if (!_storage.TryGetValue(typeof(TInterface), out Dictionary<string, Func<object>> _))
                 _storage.Add(typeof(TInterface), new Dictionary<string, Func<object>>());
+
+            var dict = _storage[typeof(TInterface)];
 
             #warning TODO: ArrowAttribute を探索する処理を追加する.
 
-            if (dict.TryGetValue(aura, out Func<object> _))
-                throw new ConflictRegistrationException(aura);
 
-            dict.Add(aura, () => Activator.CreateInstance(typeof(TImplements)));
+            if (dict.TryGetValue(name, out Func<object> _))
+                throw new ConflictRegistrationException(name);
+
+            dict.Add(name, () => Activator.CreateInstance(typeof(TImplements)));
         }
 
     }
