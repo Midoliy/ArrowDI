@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Bows.UT\" />
+    <ProjectReference Include="..\ArrowDI\ArrowDI.csproj" />
   </ItemGroup>
 
 </Project>

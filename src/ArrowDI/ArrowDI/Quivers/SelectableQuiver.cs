@@ -20,43 +20,38 @@ namespace ArrowDI
         /// </summary>
         /// <typeparam name="TInterface"></typeparam>
         /// <typeparam name="TImplements"></typeparam>
-        /// <param name="aura"></param>
+        /// <param name="arrowName"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        public string Push<TInterface, TImplements>(string aura = "", params object[] parameters)
+        public string Push<TInterface, TImplements>(string arrowName = "", params object[] parameters)
             where TImplements : TInterface
         {
-            if (aura == null)
-                throw new ArgumentNullException(nameof(aura));
+            if (arrowName == default)
+                throw new ArgumentNullException(nameof(arrowName));
 
-            var key = typeof(TInterface);
-            if (!key.IsInterface)
-                throw new InvalidCastException($"{key} is not interface.");
+            if (!typeof(TInterface).IsInterface)
+                throw new InvalidCastException($"{typeof(TInterface)} is not interface.");
 
             // 対象のコンテナが存在しない場合, コンテナを追加する.
-            if (!_storage.TryGetValue(key, out Dictionary<string, Container> _))
-                _storage.Add(key, new Dictionary<string, Container>());
-
-            var containers = _storage[key];
+            if (!_storage.TryGetValue(typeof(TInterface), out Dictionary<string, Container> containers))
+                _storage.Add(typeof(TInterface), new Dictionary<string, Container>());
 
             // auraが空文字の場合, Arrow属性を検索し, Nameプロパティ取得/設定する.
-            if (aura == string.Empty)
-            {
-                if (Attribute.GetCustomAttribute(typeof(TImplements), typeof(ArrowAttribute)) is ArrowAttribute attr)
-                    aura = attr.Aura;
-            }
+            if (arrowName == string.Empty
+            &&  Attribute.GetCustomAttribute(typeof(TImplements), typeof(ArrowAttribute)) is ArrowAttribute attr)
+                arrowName = attr.Aura;
 
             // ストレージに保管するインスタンスを生成.
             var instance = new Lazy<object>(() => Activator.CreateInstance(typeof(TImplements), parameters));
 
-            if (containers.TryGetValue(aura, out Container _))
+            if (containers.TryGetValue(arrowName, out Container _))
                 // コンテナリストの中に同一の名前で登録されているコンテナがある場合, 例外をスローする.
-                throw new ConflictRegistrationException($"[{aura}] is already registerd.");
+                throw new ConflictRegistrationException($"[{arrowName}] is already registerd.");
             else
                 // コンテナを新規登録する.
-                _storage[key].Add(aura, new Container(instance));
+                _storage[typeof(TInterface)].Add(arrowName, new Container(instance));
 
-            return aura;
+            return arrowName;
         }
 
         /// <summary>
@@ -64,10 +59,10 @@ namespace ArrowDI
         /// </summary>
         /// <typeparam name="TInterface"></typeparam>
         /// <returns></returns>
-        public TInterface Select<TInterface>(string aura = "")
+        public TInterface Select<TInterface>(string arrowName = "")
         {
-            if (aura == null)
-                throw new ArgumentNullException(nameof(aura));
+            if (arrowName == default)
+                throw new ArgumentNullException(nameof(arrowName));
 
             var key = typeof(TInterface);
             if (!key.IsInterface)
@@ -76,7 +71,7 @@ namespace ArrowDI
             if (!_storage.TryGetValue(key, out Dictionary<string, Container> containers))
                 return default;
 
-            if (!containers.TryGetValue(aura, out Container container))
+            if (!containers.TryGetValue(arrowName, out Container container))
                 return default;
 
             foreach (var opt in container.Options)
@@ -92,18 +87,18 @@ namespace ArrowDI
         /// <typeparam name="TToInterface"></typeparam>
         /// <param name="fromAura"></param>
         /// <param name="toAura"></param>
-        /// <param name="name"></param>
+        /// <param name="arrowheadName"></param>
         /// <returns></returns>
-        public void Bind<TFromInterface, TToInterface>(string fromAura, string toAura, string name = "")
+        public void Bind<TFromInterface, TToInterface>(string fromAura, string toAura, string arrowheadName = "")
         {
-            if (fromAura == null)
+            if (fromAura == default)
                 throw new ArgumentNullException(nameof(fromAura));
 
-            if (toAura == null)
+            if (toAura == default)
                 throw new ArgumentNullException(nameof(toAura));
 
-            if (name == null)
-                throw new ArgumentNullException(nameof(name));
+            if (arrowheadName == default)
+                throw new ArgumentNullException(nameof(arrowheadName));
 
             var fromKey = typeof(TFromInterface);
             if (!fromKey.IsInterface)
@@ -133,12 +128,12 @@ namespace ArrowDI
                                        .GetProperties()
                                        .Where(t => t.PropertyType == fromKey);
 
-                var property = string.IsNullOrEmpty(name)
+                var property = string.IsNullOrEmpty(arrowheadName)
                                    ? properties.First()
-                                   : properties.SelectPropetyOrDefault(name);
+                                   : properties.SelectPropetyOrDefault(arrowheadName);
 
                 if (property == default)
-                    throw new NotFoundException($"No property found with ArrowheadAttribute(Name= {name}).");
+                    throw new NotFoundException($"No property found with ArrowheadAttribute(Name= {arrowheadName}).");
 
                 if (!property.CanWrite)
                     throw new FieldAccessException($"{property.Name} cannot be writeable.");

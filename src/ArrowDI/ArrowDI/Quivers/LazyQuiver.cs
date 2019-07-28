@@ -27,16 +27,15 @@ namespace ArrowDI
         public void Push<TInterface, TImplements>(params object[] parameters)
             where TImplements : TInterface
         {
-            var key = typeof(TInterface);
-            if (!key.IsInterface)
-                throw new InvalidCastException($"{key} is not interface.");
+            if (!typeof(TInterface).IsInterface)
+                throw new InvalidCastException($"{typeof(TInterface)} is not interface.");
 
             var instance = new Lazy<object>(() => Activator.CreateInstance(typeof(TImplements), parameters));
 
-            if (_storage.TryGetValue(key, out Lazy<object> _))
-                _storage[key] = instance;
+            if (_storage.TryGetValue(typeof(TInterface), out Lazy<object> _))
+                _storage[typeof(TInterface)] = instance;
             else
-                _storage.Add(key, instance);
+                _storage.Add(typeof(TInterface), instance);
         }
         
         /// <summary>
@@ -46,18 +45,16 @@ namespace ArrowDI
         /// <returns></returns>
         public TInterface Pull<TInterface>()
         {
-            var key = typeof(TInterface);
+            if (!typeof(TInterface).IsInterface)
+                throw new InvalidCastException($"{typeof(TInterface)} is not interface.");
 
-            if (!key.IsInterface)
-                throw new InvalidCastException($"{key} is not interface.");
-
-            if (!_storage.TryGetValue(key, out Lazy<object> value))
+            if (!_storage.TryGetValue(typeof(TInterface), out Lazy<object> value))
                 return default;
 
             if(value.IsValueCreated)
                 return (TInterface)value.Value;
 
-            if (_options.TryGetValue(key, out List<Action> options))
+            if (_options.TryGetValue(typeof(TInterface), out List<Action> options))
                 foreach (var option in options) option();
 
             return (TInterface)value.Value;

@@ -83,8 +83,8 @@ namespace ArrowDI.Console
 
             var h1 = SelectableQuiver.Shared.Push<IHoge, Hoge>();
 
-            var f1 = SelectableQuiver.Shared.Push<IFuga, Fuga>(aura:"", 50);
-            var f2 = SelectableQuiver.Shared.Push<IFuga, Fuga2>(aura:"IFuga2");
+            var f1 = SelectableQuiver.Shared.Push<IFuga, Fuga>(arrowName:"", 50);
+            var f2 = SelectableQuiver.Shared.Push<IFuga, Fuga2>(arrowName:"IFuga2");
             var f3 = SelectableQuiver.Shared.Push<IFuga, Fuga>("fuga", 50);
 
             SelectableQuiver.Shared.Bind<IFuga, IHoge>(f1, h1);

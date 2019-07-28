@@ -21,16 +21,15 @@ namespace ArrowDI
         public void Push<TInterface, TImplements>(params object[] parameters)
             where TImplements : TInterface
         {
-            var key = typeof(TInterface);
-            if (!key.IsInterface)
-                throw new InvalidCastException($"{key} is not interface.");
+            if (!typeof(TInterface).IsInterface)
+                throw new InvalidCastException($"{typeof(TInterface)} is not interface.");
 
             var instance = Activator.CreateInstance(typeof(TImplements), parameters);
 
-            if (_storage.TryGetValue(key, out object _))
-                _storage[key] = instance;
+            if (_storage.TryGetValue(typeof(TInterface), out object _))
+                _storage[typeof(TInterface)] = instance;
             else
-                _storage.Add(key, instance);
+                _storage.Add(typeof(TInterface), instance);
         }
 
         /// <summary>
@@ -40,12 +39,10 @@ namespace ArrowDI
         /// <returns></returns>
         public TInterface Pull<TInterface>()
         {
-            var key = typeof(TInterface);
+            if (!typeof(TInterface).IsInterface)
+                throw new InvalidCastException($"{typeof(TInterface)} is not interface.");
 
-            if (!key.IsInterface)
-                throw new InvalidCastException($"{key} is not interface.");
-
-            return _storage.TryGetValue(key, out object value)
+            return _storage.TryGetValue(typeof(TInterface), out object value)
                 ? (TInterface)value
                 : default;
         }
@@ -93,10 +90,7 @@ namespace ArrowDI
                 foreach (var property in properties)
                 {
                     var arrowhead = (ArrowheadAttribute)Attribute.GetCustomAttribute(property, typeof(ArrowheadAttribute));
-                    if (arrowhead == null)
-                        continue;
-
-                    if (arrowhead.Name != name)
+                    if (arrowhead?.Name != name)
                         continue;
 
                     property.SetValue(to, from);
